@@ -1,0 +1,9 @@
+.DS_Store
+*/.DS_Store
+.vscode
+.idea
+
+# python
+venv
+.venv
+**/__pycache__
