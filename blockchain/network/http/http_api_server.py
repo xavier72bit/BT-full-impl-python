@@ -110,9 +110,19 @@ class HTTPAPI(API):
         lb = self.blockchain.last_block
         return lb.serialize() if lb else None
 
-    @http_route('/pow_check', methods=['GET'])
-    def _api_pow_check(self):
-        return self.blockchain.pow_check
+    @http_route('/pow_difficulty', methods=['GET'])
+    def _api_pow_difficulty(self):
+        """
+        返回一个PoW难题, 结构如下:
+        {
+            'difficulty': 4,
+            'hash_startwith': '0000'
+        }
+        """
+        return {
+            'hash_startwith': self.blockchain.pow_check,
+            'difficulty': self.blockchain.pow_difficulty
+        }
 
     @http_route('/transaction', methods=['POST'])
     def _api_add_transaction(self):

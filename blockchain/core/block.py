@@ -12,23 +12,24 @@ class Block:
     区块
     """
     __slots__ = [
-        'index', 'timestamp', 'transactions', 'nonce', 'prev_hash', 'hash',
+        'index', 'timestamp', 'transactions', 'nonce', 'prev_hash', 'hash', 'difficulty',
         '_runtime_is_from_peer'
     ]
     frozen_fields = (
-        'index', 'timestamp', 'transactions', 'nonce', 'prev_hash', 'hash',
+        'index', 'timestamp', 'transactions', 'nonce', 'prev_hash', 'hash', 'difficulty',
         '_runtime_is_from_peer'
     )
     # 序列化、反序列化时的字段
-    serialized_fields = ('index', 'timestamp', 'transactions', 'nonce', 'prev_hash', 'hash')
+    serialized_fields = ('index', 'timestamp', 'transactions', 'nonce', 'prev_hash', 'hash', 'difficulty',)
 
-    def __init__(self, index, timestamp, transactions: list[Transaction], nonce, prev_hash):
+    def __init__(self, index, timestamp, transactions: list[Transaction], nonce, prev_hash, difficulty):
         ## core data
         object.__setattr__(self, 'index', index)
         object.__setattr__(self, 'timestamp', timestamp)
         object.__setattr__(self, 'transactions', transactions)
         object.__setattr__(self, 'nonce', nonce)
         object.__setattr__(self, 'prev_hash', prev_hash)
+        object.__setattr__(self, 'difficulty', difficulty)
 
         ## hash
         object.__setattr__(self, 'hash', self.compute_hash())
@@ -69,7 +70,8 @@ class Block:
             'timestamp': self.timestamp,
             'transactions': [t.serialize() for t in self.transactions],
             'nonce': self.nonce,
-            'prev_hash': self.prev_hash
+            'prev_hash': self.prev_hash,
+            'difficulty': self.difficulty
         }
 
     def compute_hash(self) -> str:

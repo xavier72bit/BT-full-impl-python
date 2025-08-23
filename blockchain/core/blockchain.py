@@ -44,6 +44,9 @@ class BlockChain:
 
     @property
     def pow_check(self) -> str:
+        """
+        区块的hash值应当以此值开头
+        """
         return "0" * self.pow_difficulty
 
     @bcl.func_lock
@@ -101,11 +104,19 @@ class BlockChain:
 
         return True
 
+    def valid_block_difficulty(self, block: Block) -> bool:
+        return block.difficulty == self.pow_difficulty
+
+    def valid_block_hash(self, block: Block) -> bool:
+        block_hash = block.compute_hash()
+        return block.hash == block_hash
+
     def valid_new_block(self, block: Block) -> bool:
         """
         1. 验证Proof of Work的有效性
         2. 验证hash
         3. 验证block数据
+        4. 验证difficulty
 
         :param block:
         :return: bool
@@ -115,16 +126,15 @@ class BlockChain:
 
         pow_check: bool = self.valid_proof_of_work(block)
         tx_check: bool = self.valid_block_transactions(block)
+        hash_check: bool = self.valid_block_hash(block)
 
         if lb:
             index_check: bool = lb.index == block.index - 1 and block.index == len(self) + 1
-            hash_check: bool = lb.hash == block.prev_hash
-            print(f"验证区块: index: {index_check}, hash: {hash_check}, pow: {pow_check}, tx: {tx_check}")
-            return all([pow_check, hash_check, index_check, tx_check])
+            prev_hash_check: bool = lb.hash == block.prev_hash
+            return all([pow_check, hash_check, index_check, tx_check, prev_hash_check])
         else:
             index_check: bool = block.index == 1
-            print(f"验证区块: index: {index_check}, pow: {pow_check}, tx: {tx_check}")
-            return all([pow_check, index_check, tx_check])
+            return all([pow_check, index_check, tx_check, hash_check])
 
     def to_json(self) -> str:
         return json.dumps([b.serialize() for b in self.__chain], sort_keys=True)

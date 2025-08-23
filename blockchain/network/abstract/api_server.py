@@ -102,7 +102,7 @@ class API(ABC):
         pass
 
     @abstractmethod
-    def _api_pow_check(self):
+    def _api_pow_difficulty(self):
         """
         检查Proof of Work
         """

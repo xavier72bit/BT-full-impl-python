@@ -17,13 +17,16 @@ class ProofOfWorkMining:
         # TODO: 暂时写死
         self.node_addr = 'http://127.0.0.1:5000'
         self.pow_check_str = None
+        self.difficulty = None
 
-    def set_pow_check(self):
-        if self.pow_check_str is None:
-            self.pow_check_str = json_client.get(f"{self.node_addr}/pow_check")
+        self.get_difficulty()
+
+    def get_difficulty(self):
+        pow_difficulty = json_client.get(f"{self.node_addr}/pow_difficulty")
+        self.pow_check_str = pow_difficulty['hash_startwith']
+        self.difficulty = pow_difficulty['difficulty']
 
     def check_proof(self, block: Block) -> bool:
-        self.set_pow_check()
         return block.hash.startswith(self.pow_check_str)
 
     def mine_block(self) -> Block | None:
@@ -46,7 +49,8 @@ class ProofOfWorkMining:
                 timestamp=int(time()),
                 transactions=mining_data,
                 nonce=nonce,
-                prev_hash=last_block.hash if last_block else None
+                prev_hash=last_block.hash if last_block else None,
+                difficulty=self.difficulty
             )
 
             if self.check_proof(block):
