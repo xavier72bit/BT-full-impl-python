@@ -8,6 +8,12 @@ if TYPE_CHECKING:
 # std import
 import json
 
+# local import
+from ..tools.threading_lock import Lock
+
+
+bcl = Lock()
+
 
 class BlockChain:
     def __init__(self, current_node: Node):
@@ -40,6 +46,7 @@ class BlockChain:
     def pow_check(self) -> str:
         return "0" * self.pow_difficulty
 
+    @bcl.func_lock
     def add_block(self, block: Block | None) -> bool:
         """
 

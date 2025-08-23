@@ -43,14 +43,14 @@ def http_route(rule, **options):
 class HTTPAPI(API):
     @property
     def protocol(self):
-        return 'http://'
+        return 'http'
 
     def __init__(self, host, port):
         super().__init__()
         self.host = host
         self.port = port
 
-        self.addr = f'{self.protocol}{self.host}:{self.port}'
+        self.addr = f'{self.protocol}://{self.host}:{self.port}'
 
     def _register_router(self):
         """

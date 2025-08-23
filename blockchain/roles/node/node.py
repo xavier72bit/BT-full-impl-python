@@ -5,6 +5,9 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from ...types.network_types import API
 
+# std import
+from threading import Thread
+
 # local import
 from ...core.blockchain import BlockChain
 from ...core.tx_pool import TransactionPool
@@ -43,6 +46,9 @@ class Node:
         self.join_peer_addr = addr
 
     def start(self):
+        """
+        一个线程用于启动线程循环, 另一个线程用于client循环
+        """
         if self.join_peer:
             print("节点加入网络")
             peer_list = self.peer_client.join(self.join_peer_protocol, self.join_peer_addr)

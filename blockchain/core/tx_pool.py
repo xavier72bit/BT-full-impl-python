@@ -11,6 +11,10 @@ from time import time
 
 # local import
 from .transaction import Transaction
+from ..tools.threading_lock import Lock
+
+
+txl = Lock()
 
 
 class TransactionPool:
@@ -21,6 +25,7 @@ class TransactionPool:
     def __len__(self):
         return len(self.__transactions)
 
+    @txl.func_lock
     def add_transaction(self, transaction: Transaction) -> bool:
         balance = self.current_node.blockchain.compute_balance(transaction.saddr)
         if transaction.amount > balance:
@@ -38,6 +43,7 @@ class TransactionPool:
 
         return False
 
+    @txl.func_lock
     def mark_tx(self, block: Block):
         """
         标记区块数据中的交易已确认
@@ -47,6 +53,7 @@ class TransactionPool:
             if t.hash in all_confirmed_tx_hashes:
                 t.mark_confirmed()
 
+    @txl.func_lock
     def clear(self):
         """
         清除交易池中已确认的交易
@@ -71,6 +78,7 @@ class TransactionPool:
 
         return tuple(self.__transactions + [reward_tx])
 
+    @txl.func_lock
     def get_prize(self, raddr: str, amount: int) -> bool:
         """
         空投奖励
