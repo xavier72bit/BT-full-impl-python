@@ -9,4 +9,5 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from ..network.abstract.api_server import API
     from ..network.abstract.peer_client_adapter import PeerClientAdapter
-    from ..network.common.peer import NetworkNodePeer
+    from ..network.common.peer import NetworkNodePeer, NetworkNodePeerRegistry
+    from ..network.common.peer_client import PeerClient

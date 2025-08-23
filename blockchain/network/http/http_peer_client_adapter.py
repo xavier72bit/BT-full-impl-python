@@ -17,6 +17,10 @@ import requests
 from ..abstract.peer_client_adapter import PeerClientAdapter
 from ...exceptions import PeerClientAdapterProtocolError
 from ..common.peer import NetworkNodePeer
+from ...tools.http_client_json import JSONClient
+
+
+json_client = JSONClient()
 
 
 class HTTPPeerClientAdapter(PeerClientAdapter):
@@ -30,21 +34,24 @@ class HTTPPeerClientAdapter(PeerClientAdapter):
 
     def send_block(self, peer: NetworkNodePeer, block: Block):
         self.check_peer_protocol(peer)
-        raise NotImplementedError
+        api_path = '/broadcast/block'
+        return json_client.post(url=f"{peer.addr}{api_path}", data=block.serialize())
 
     def send_tx(self, peer: NetworkNodePeer, tx: Transaction):
         self.check_peer_protocol(peer)
-        raise NotImplementedError
+        api_path = '/broadcast/tx'
+        return json_client.post(url=f"{peer.addr}{api_path}", data=tx.serialize())
 
     def send_peer(self, peer: NetworkNodePeer, send_peer_info: NetworkNodePeer):
         self.check_peer_protocol(peer)
-        raise NotImplementedError
+        api_path = '/broadcast/peer'
+
+        return json_client.post(url=f"{peer.addr}{api_path}", data=send_peer_info.serialize())
 
     def join_network(self, peer: NetworkNodePeer, self_peer_info: NetworkNodePeer) -> list[NetworkNodePeer] | None:
-        api_path = '/join'
         self.check_peer_protocol(peer)
+        api_path = '/join'
 
-        response = requests.post(url=f"{peer.addr}{api_path}", json=self_peer_info.serialize())
-        if response.ok:
-            if peer_data := response.json():
-                return [NetworkNodePeer.deserialize(pd) for pd in peer_data]
+        resp = json_client.post(url=f"{peer.addr}{api_path}", data=self_peer_info.serialize())
+        if resp:
+            return [NetworkNodePeer.deserialize(pd) for pd in resp]

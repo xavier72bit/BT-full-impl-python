@@ -21,6 +21,7 @@ from ...network.common.peer import NetworkNodePeer
 __all__ = ['HTTPAPI']
 
 http = Flask('node-http-api-server')
+http.json.sort_keys = True  # 显式要求flask的json排列key
 
 router_registry = {}
 def http_route(rule, **options):
@@ -89,11 +90,11 @@ class HTTPAPI(API):
         """
         下载json格式的区块链数据
         """
-        return self.blockchain.to_json()
+        return self.blockchain.serialize()
 
     @http_route('/blockchain/summary', methods=['GET'])
     def _api_download_summary(self):
-        return self.blockchain.to_summary_json()
+        return self.blockchain.serialize_summary()
 
     @http_route('/block', methods=['POST'])
     def _api_add_block(self):
@@ -147,6 +148,7 @@ class HTTPAPI(API):
         tx_data: dict = request.get_json()
         tx = Transaction.deserialize(tx_data)
         tx.mark_from_peer()
+        print(f"收到来自广播的tx：{tx}")
         return self.txpool.add_transaction(tx)
 
     @http_route('/broadcast/block', methods=['POST'])
@@ -154,6 +156,7 @@ class HTTPAPI(API):
         block_data: dict = request.get_json()
         block = Block.deserialize(block_data)
         block.mark_from_peer()
+        print(f"收到来自广播的block：{block}")
         return self.blockchain.add_block(block)
 
     @http_route('/broadcast/peer', methods=['POST'])

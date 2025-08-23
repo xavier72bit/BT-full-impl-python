@@ -2,11 +2,9 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
-    from ..types.node_types import Node
+    from ..types.node_types import Node, TaskQueue
     from ..types.core_types import Block
-
-# std import
-import json
+    from ..types.network_types import PeerClient
 
 # local import
 from ..tools.threading_lock import Lock
@@ -18,6 +16,8 @@ bcl = Lock()
 class BlockChain:
     def __init__(self, current_node: Node):
         self.current_node = current_node
+        self.tq: TaskQueue = self.current_node.task_queue
+        self.peer_client: PeerClient = self.current_node.peer_client
 
         # core
         self.__chain: list[Block] = []
@@ -63,7 +63,11 @@ class BlockChain:
         if self.valid_new_block(block):
             self.__chain.append(block)
             current_txpool.mark_tx(block)
+
+            if not block.is_from_peer: # 广播区块
+                self.tq.put(self.peer_client.broadcast_block, block)
             return True
+
         else:
             return False
 
@@ -135,10 +139,10 @@ class BlockChain:
             index_check: bool = block.index == 1
             return all([pow_check, index_check, tx_check, hash_check])
 
-    def to_json(self) -> str:
-        return json.dumps([b.serialize() for b in self.__chain], sort_keys=True)
+    def serialize(self) -> list[dict]:
+        return [b.serialize() for b in self.__chain]
 
-    def to_summary_json(self) -> str:
+    def serialize_summary(self) -> dict:
         """
         区块链的摘要, 结构如下
         {
@@ -163,4 +167,4 @@ class BlockChain:
                 'prev_hash': block.prev_hash
             })
 
-        return json.dumps(summary, sort_keys=True)
+        return summary

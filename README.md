@@ -40,3 +40,5 @@ graph LR
     NetworkA --> APIB
     NetworkB --> APIA
 ```
+
+关于数据传输要求: Python对象在序列化为JSON字符串时,统一都要求sort_keys,以保证计算hash数据的统一性

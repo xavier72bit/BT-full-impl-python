@@ -2,8 +2,9 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
-    from ..types.node_types import Node
+    from ..types.node_types import Node, TaskQueue
     from ..types.core_types import Block
+    from ..types.network_types import PeerClient
 
 # std import
 import json
@@ -20,6 +21,10 @@ txl = Lock()
 class TransactionPool:
     def __init__(self, current_node: Node):
         self.current_node = current_node
+        self.tq: TaskQueue = self.current_node.task_queue
+        self.peer_client: PeerClient = self.current_node.peer_client
+
+        # core
         self.__transactions: list[Transaction] = []
 
     def __len__(self):
@@ -37,11 +42,13 @@ class TransactionPool:
 
         if transaction.verify_sign():
             self.__transactions.append(transaction)
+
+            if not transaction.is_from_peer:  # 广播交易
+                self.tq.put(self.peer_client.broadcast_tx, transaction)
             return True
         else:
             print(f'签名校验失败')
-
-        return False
+            return False
 
     @txl.func_lock
     def mark_tx(self, block: Block):
@@ -83,12 +90,16 @@ class TransactionPool:
         """
         空投奖励
         """
-        self.__transactions.append(Transaction(
+        prize_tx = Transaction(
             saddr=None,
             raddr=raddr,
             amount=amount,
             timestamp=int(time()),
-        ))
+        )
+        self.__transactions.append(prize_tx)
+
+        # 广播这条奖励
+        self.tq.put(self.peer_client.broadcast_tx, prize_tx)
         return True
 
     def to_json(self) -> str:

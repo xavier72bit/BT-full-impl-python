@@ -35,6 +35,13 @@ class PeerClientAdapter(ABC):
         pass
 
     @abstractmethod
+    def send_peer(self, peer: NetworkNodePeer, send_peer: NetworkNodePeer):
+        """
+        将联系自己邻居分享给自己的其他邻居
+        """
+        pass
+
+    @abstractmethod
     def join_network(self, peer: NetworkNodePeer, self_peer_info: NetworkNodePeer):
         """
         向指定的网络节点发送加入请求

@@ -4,7 +4,7 @@ import time
 # local import
 from blockchain.core.transaction import Transaction
 from blockchain.tools.ecdsa_sign_tools import ECDSATool
-from blockchain.tools.http_json import JSONClient
+from blockchain.tools.http_client_json import JSONClient
 
 
 json_client = JSONClient()

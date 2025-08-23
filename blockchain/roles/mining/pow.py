@@ -4,7 +4,7 @@ from time import time
 # local import
 from blockchain.core.block import Block
 from blockchain.core.transaction import Transaction
-from blockchain.tools.http_json import JSONClient
+from blockchain.tools.http_client_json import JSONClient
 
 
 json_client = JSONClient()
