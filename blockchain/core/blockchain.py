@@ -49,28 +49,6 @@ class BlockChain:
         """
         return "0" * self.pow_difficulty
 
-    @bcl.func_lock
-    def add_block(self, block: Block | None) -> bool:
-        """
-
-        :return: bool
-        """
-        if block is None:
-            return False
-
-        current_txpool = self.current_node.txpool
-
-        if self.valid_new_block(block):
-            self.__chain.append(block)
-            current_txpool.mark_tx(block)
-
-            if not block.is_from_peer: # 广播区块
-                self.tq.put(self.peer_client.broadcast_block, block)
-            return True
-
-        else:
-            return False
-
     def compute_balance(self, wallet_addr) -> int:
         balance = 0
         for b in self.__chain:
@@ -138,6 +116,32 @@ class BlockChain:
         else:
             index_check: bool = block.index == 1
             return all([pow_check, index_check, tx_check, hash_check])
+
+    @bcl.func_lock
+    def add_block(self, block: Block | None) -> bool:
+        """
+
+        :return: bool
+        """
+        current_txpool = self.current_node.txpool
+
+        # block type check
+        if block is None:
+            return False
+
+        # block validation check
+        if not self.valid_new_block(block):
+            return False
+
+        # add block & mark tx verified
+        # TODO: 这里应该做一下延迟处理，添加了一个块之后，将第n个之前的块内的所有交易标记为“已确认”
+        self.__chain.append(block)
+        current_txpool.mark_tx(block)
+
+        # 广播区块
+        if not block.is_from_peer:
+            self.tq.put(self.peer_client.broadcast_block, block)
+        return True
 
     def serialize(self) -> list[dict]:
         return [b.serialize() for b in self.__chain]

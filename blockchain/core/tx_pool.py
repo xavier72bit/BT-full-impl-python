@@ -32,23 +32,26 @@ class TransactionPool:
 
     @txl.func_lock
     def add_transaction(self, transaction: Transaction) -> bool:
-        balance = self.current_node.blockchain.compute_balance(transaction.saddr)
-        if transaction.amount > balance:
-            print(f'{transaction.saddr} 余额不足')
-            return False
+        # 支付方为None的情况只有空投奖励,这里只接受其他节点同步过来的数据
+        if (transaction.saddr is None) and (not transaction.is_from_peer):
+                return False
 
-        if transaction.saddr is None:
-            return False
+        # 余额check(系统奖励不进行check)
+        if transaction.saddr is not None:
+            balance = self.current_node.blockchain.compute_balance(transaction.saddr)
+            if transaction.amount > balance:
+                print(f'{transaction.saddr} 余额不足')
+                return False
 
-        if transaction.verify_sign():
-            self.__transactions.append(transaction)
-
-            if not transaction.is_from_peer:  # 广播交易
-                self.tq.put(self.peer_client.broadcast_tx, transaction)
-            return True
-        else:
+        # 交易签名check
+        if not transaction.verify_sign():
             print(f'签名校验失败')
             return False
+
+        self.__transactions.append(transaction)
+        if not transaction.is_from_peer:  # 广播交易
+            self.tq.put(self.peer_client.broadcast_tx, transaction)
+        return True
 
     @txl.func_lock
     def mark_tx(self, block: Block):

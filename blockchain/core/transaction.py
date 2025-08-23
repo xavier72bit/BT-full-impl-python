@@ -112,8 +112,7 @@ class Transaction:
         验证交易是否有效
         :return:
         """
-        # 系统交易
-        if self.saddr is None:
+        if self.saddr is None:  # 系统交易
             return True
 
         if self.signature is None:

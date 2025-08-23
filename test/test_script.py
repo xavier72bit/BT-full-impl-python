@@ -8,6 +8,7 @@
 测试脚本：
 运行3-wallet、1-miner
 """
+import json
 import random
 # std import
 from time import sleep
@@ -106,6 +107,6 @@ if __name__ == '__main__':
     else:
         print("未成功挖出区块")
 
-    print(requests.get('http://127.0.0.1:5000/blockchain').json())
+    print(json.dumps(requests.get('http://127.0.0.1:5000/blockchain').json()))
 
-    print(requests.get('http://127.0.0.1:5000/blockchain/summary').json())
+    print(json.dumps(requests.get('http://127.0.0.1:5000/blockchain/summary').json()))
