@@ -91,6 +91,10 @@ class HTTPAPI(API):
         """
         return self.blockchain.to_json()
 
+    @http_route('/blockchain/summary', methods=['GET'])
+    def _api_download_summary(self):
+        return self.blockchain.to_summary_json()
+
     @http_route('/block', methods=['POST'])
     def _api_add_block(self):
         block_data: dict = request.get_json()

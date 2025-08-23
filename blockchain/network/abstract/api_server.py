@@ -78,6 +78,13 @@ class API(ABC):
         pass
 
     @abstractmethod
+    def _api_download_summary(self):
+        """
+        下载区块链摘要
+        """
+        pass
+
+    @abstractmethod
     def _api_add_block(self):
         """
         添加区块

@@ -108,3 +108,4 @@ if __name__ == '__main__':
 
     print(requests.get('http://127.0.0.1:5000/blockchain').json())
 
+    print(requests.get('http://127.0.0.1:5000/blockchain/summary').json())

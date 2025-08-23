@@ -121,7 +121,6 @@ class BlockChain:
         :param block:
         :return: bool
         """
-        # TODO: hash check应该校验
         lb = self.last_block
 
         pow_check: bool = self.valid_proof_of_work(block)
@@ -138,3 +137,30 @@ class BlockChain:
 
     def to_json(self) -> str:
         return json.dumps([b.serialize() for b in self.__chain], sort_keys=True)
+
+    def to_summary_json(self) -> str:
+        """
+        区块链的摘要, 结构如下
+        {
+            'total_difficulty': xxxx,
+            'total_length': xxx,
+            'blocks': [
+                {'hash': 'xxxx', 'prev_hash': 'xxx'},
+                {'hash': 'xxxx', 'prev_hash': 'xxxx'}
+            ]
+        }
+        """
+        summary = {
+            'total_difficulty': 0,
+            'total_length': len(self.__chain),
+            'blocks': []
+        }
+
+        for block in self.__chain:
+            summary['total_difficulty'] += block.difficulty
+            summary['blocks'].append({
+                'hash': block.hash,
+                'prev_hash': block.prev_hash
+            })
+
+        return json.dumps(summary, sort_keys=True)
