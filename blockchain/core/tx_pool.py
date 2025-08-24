@@ -33,8 +33,17 @@ class TransactionPool:
     def __len__(self):
         return len(self.__transactions)
 
+    def get_all_txs_hash(self) -> list:
+        return [tx.hash for tx in self.__transactions]
+
     @txl.func_lock
     def add_transaction(self, transaction: Transaction) -> bool:
+        # 交易重复检查
+        all_txs_hash = self.get_all_txs_hash()
+        if transaction.hash in all_txs_hash:
+            logger.error(f"交易重复, 交易信息已丢弃: {transaction.serialize()}")
+            return False
+
         # 支付方为None的情况只有空投奖励,这里只接受其他节点同步过来的数据
         if (transaction.saddr is None) and (not transaction.is_from_peer):
             logger.error(f"伪造系统奖励，交易信息已丢弃: {transaction.serialize()}")

@@ -97,4 +97,4 @@ class PeerClient:
             bc_summary_data = self._get_blockchain_summary(peer)
 
             tq.put(cons.check_summary, BlockChainSummary.deserialize(bc_summary_data))
-            logger.info(f"新增共识检查, 节点对象: {peer.hash}")
+            logger.info(f"新增共识检查Task, 节点对象: {peer.hash}")
