@@ -6,6 +6,9 @@ if TYPE_CHECKING:
     from ..types.core_types import Block
     from ..types.network_types import PeerClient
 
+# 3rd import
+from loguru import logger
+
 # local import
 from ..tools.threading_lock import Lock
 
@@ -31,6 +34,9 @@ class BlockChain:
 
     @property
     def pow_reward(self) -> int:
+        """
+        挖矿奖励
+        """
         return 1
 
     @property
@@ -59,7 +65,7 @@ class BlockChain:
                     balance += tx.amount
                 else:
                     continue
-        print(f"计算{wallet_addr}的余额: {balance}")
+        logger.info(f"计算<addr: {wallet_addr}> 的余额: balance")
         return balance
 
     def valid_proof_of_work(self, block: Block) -> bool:
@@ -110,12 +116,22 @@ class BlockChain:
         hash_check: bool = self.valid_block_hash(block)
 
         if lb:
+            logger.info(f"非创世区块: {block.hash}, 执行检查")
             index_check: bool = lb.index == block.index - 1 and block.index == len(self) + 1
             prev_hash_check: bool = lb.hash == block.prev_hash
-            return all([pow_check, hash_check, index_check, tx_check, prev_hash_check])
+
+            check_result = all([pow_check, hash_check, index_check, tx_check, prev_hash_check])
+            if not check_result:
+                logger.error(f"检查未通过, pow: {pow_check}, hash: {hash_check}, index: {index_check}, prev_hash: {prev_hash_check}, tx: {tx_check}")
+            return check_result
         else:
+            logger.info(f"创世区块: {block.hash}, 执行检查")
             index_check: bool = block.index == 1
-            return all([pow_check, index_check, tx_check, hash_check])
+
+            check_result = all([pow_check, index_check, tx_check, hash_check])
+            if not check_result:
+                logger.error(f"检查未通过, pow: {pow_check}, index: {index_check}, tx: {tx_check}, hash: {hash_check}")
+            return check_result
 
     @bcl.func_lock
     def add_block(self, block: Block | None) -> bool:
@@ -137,10 +153,12 @@ class BlockChain:
         # TODO: 这里应该做一下延迟处理，添加了一个块之后，将第n个之前的块内的所有交易标记为“已确认”
         self.__chain.append(block)
         current_txpool.mark_tx(block)
+        logger.info(f"区块{block.hash}已上链")
 
         # 广播区块
         if not block.is_from_peer:
             self.tq.put(self.peer_client.broadcast_block, block)
+            logger.info(f"区块{block.hash}广播任务已进入任务队列")
         return True
 
     def serialize(self) -> list[dict]:

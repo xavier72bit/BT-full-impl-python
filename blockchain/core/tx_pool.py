@@ -10,6 +10,9 @@ if TYPE_CHECKING:
 import json
 from time import time
 
+# 3rd import
+from loguru import logger
+
 # local import
 from .transaction import Transaction
 from ..tools.threading_lock import Lock
@@ -34,23 +37,26 @@ class TransactionPool:
     def add_transaction(self, transaction: Transaction) -> bool:
         # 支付方为None的情况只有空投奖励,这里只接受其他节点同步过来的数据
         if (transaction.saddr is None) and (not transaction.is_from_peer):
-                return False
+            logger.error(f"伪造系统奖励，交易信息已丢弃: {transaction.serialize()}")
+            return False
 
         # 余额check(系统奖励不进行check)
         if transaction.saddr is not None:
             balance = self.current_node.blockchain.compute_balance(transaction.saddr)
             if transaction.amount > balance:
-                print(f'{transaction.saddr} 余额不足')
+                logger.error(f'{transaction.saddr}的链上余额: {balance}, 无法完成本次交易: {transaction.serialize()}')
                 return False
 
         # 交易签名check
         if not transaction.verify_sign():
-            print(f'签名校验失败')
+            logger.error(f'交易签名校验失败, 交易信息: {transaction.serialize()}')
             return False
 
         self.__transactions.append(transaction)
+        logger.info(f"交易信息已进入本机交易池, 交易信息: {transaction.serialize()}")
         if not transaction.is_from_peer:  # 广播交易
             self.tq.put(self.peer_client.broadcast_tx, transaction)
+            logger.info(f"交易{transaction.hash}广播任务已进入任务队列")
         return True
 
     @txl.func_lock

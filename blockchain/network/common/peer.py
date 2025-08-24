@@ -1,5 +1,8 @@
+# 3rd import
+from loguru import logger
+
 # local import
-from blockchain.tools.hash_tools import compute_hash
+from ...tools.hash_tools import compute_hash
 from ...exceptions import PeerClientProtocolError
 from ...exceptions import DeserializeHashValueCheckError
 
@@ -97,9 +100,11 @@ class NetworkNodePeerRegistry:
 
     def add(self, node_peer: NetworkNodePeer) -> bool:
         if node_peer.hash in self.keys():
+            logger.info(f"网络成员节点: {node_peer.hash}已经存在")
             return False
         else:
             self.__peers[node_peer.hash] = node_peer
+            logger.info(f"网络成员节点: {node_peer.hash}添加成功, 当前节点成员数量: {len(self)}")
             return True
 
     def delete(self, peer_hash) -> bool:
@@ -107,4 +112,5 @@ class NetworkNodePeerRegistry:
             return False
         else:
             del self.__peers[peer_hash]
+            logger.info(f"网络成员节点: {peer_hash}已移除, 当前节点成员数量: {len(self)}")
             return True

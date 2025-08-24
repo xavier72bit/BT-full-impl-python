@@ -7,6 +7,9 @@ if TYPE_CHECKING:
 # std import
 import threading
 
+# 3rd import
+from loguru import logger
+
 # local import
 from ...core.blockchain import BlockChain
 from ...core.tx_pool import TransactionPool
@@ -26,6 +29,9 @@ class Node:
     4. scheduler
     """
     def __init__(self, api: API):
+        """
+        由于各个组件资源之间存在相互依赖的关系，这里的执行顺序不可以随意修改
+        """
         # 初始化peer_registry, 及其相关参数
         self.peer_registry: NetworkNodePeerRegistry = NetworkNodePeerRegistry()
         self.join_peer = False
@@ -72,11 +78,11 @@ class Node:
         pass
 
     def start_api_server(self):
-        print(f"节点启动, peer信息: {[p.serialize() for p in self.peer_registry]}")
         self.api.run()
+        logger.info(f"API Server 启动")
 
     def start_scheduler(self):
-        pass
+        logger.info(f"Scheduler 启动")
 
     def start_worker(self):
         """
@@ -84,14 +90,13 @@ class Node:
         """
         worker_thread = threading.Thread(target=self.worker.run, daemon=True)
         worker_thread.start()
+        logger.info(f"Worker Thread 启动")
 
     def start(self):
-        """
-        一个线程用于启动线程循环, 另一个线程用于client循环
-        """
         if self.join_peer:
-            print("节点加入网络")
+            logger.info(f"节点加入网络, 申请节点为: {self.join_peer_protocol}://{self.join_peer_addr}")
             peer_list = self.peer_client.join(self.join_peer_protocol, self.join_peer_addr)
+            # TODO: 网络请求错误重试处理（IN PEER CLIENT）
             for peer in peer_list:
                 self.peer_registry.add(peer)
 

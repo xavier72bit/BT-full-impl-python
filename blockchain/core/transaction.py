@@ -1,9 +1,8 @@
-# std import
-import json
-import hashlib
+# 3rd import
+from loguru import logger
 
-from ..exceptions import DeserializeHashValueCheckError
 # local import
+from ..exceptions import DeserializeHashValueCheckError
 from ..tools.hash_tools import compute_hash
 from ..tools.ecdsa_sign_tools import ECDSATool
 
@@ -49,22 +48,21 @@ class Transaction:
         """
         将交易标记为已确认
         """
-        # TODO: 检测调用者, 打log
         object.__setattr__(self, '_runtime_is_confirmed', True)
+        logger.info(f"交易: {self.hash} 标记为已确认, 上次确认状态: {self.is_confirmed}, 后续会从交易池中移除此交易")
 
     def mark_unconfirmed(self):
         """
         将交易标记为未确认
         """
-        # TODO: 检测调用者, 打log
         object.__setattr__(self, '_runtime_is_confirmed', False)
+        logger.info(f"交易: {self.hash} 标记为未确认, 上次确认状态: {self.is_confirmed}")
 
     @property
     def is_from_peer(self):
         return self._runtime_is_from_peer
 
     def mark_from_peer(self):
-        # TODO: 检测调用者, 打log
         object.__setattr__(self, '_runtime_is_from_peer', True)
 
     def __setattr__(self, key, value):
@@ -112,14 +110,22 @@ class Transaction:
         验证交易是否有效
         :return:
         """
-        if self.saddr is None:  # 系统交易
+        logger.info(f"验证交易: {self.hash}")
+        if self.saddr is None:
+            logger.info(f"验证交易: {self.serialize()}通过, 系统奖励")
             return True
 
         if self.signature is None:
+            logger.error(f"验证交易: {self.serialize()}失败, 签名字段为空")
             return False
 
         ecdsa_tool = ECDSATool(public_key=self.saddr)
-        return ecdsa_tool.verify_sign_data(self.signature, self.hash.encode())
+        verify_result = ecdsa_tool.verify_sign_data(self.signature, self.hash.encode())
+        if not verify_result:
+            logger.error(f"验证交易: {self.serialize()}失败, 签名验证未通过")
+        else:
+            logger.info(f"验证交易: {self.serialize()}成功")
+        return verify_result
 
     @classmethod
     def deserialize(cls, data: dict | None) -> "Transaction | None":

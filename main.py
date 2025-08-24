@@ -4,7 +4,6 @@ import argparse
 
 # local import
 from blockchain.roles.node.node import Node
-from blockchain.network.common.peer import NetworkNodePeer
 
 # 角色支持的类型定义 Const
 SUPPORTED_ROLE_TYPES = {

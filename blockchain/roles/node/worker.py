@@ -10,6 +10,9 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from ...types.node_types import TaskQueue
 
+# 3rd import
+from loguru import logger
+
 
 class Worker:
     def __init__(self, tq: TaskQueue):
@@ -19,6 +22,9 @@ class Worker:
         while True:
             task = self.tq.get()
             try:
+                logger.info(f"获取到task: {task}")
                 task()
             except Exception as e:
-                print(f"任务执行失败 {e}")
+                logger.error(f"任务执行失败: {e}")
+            else:
+                logger.info(f"任务执行完成")

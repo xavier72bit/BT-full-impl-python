@@ -10,6 +10,7 @@ import functools
 
 # 3rd import
 from flask import Flask, request, jsonify
+from loguru import logger
 
 # local import
 from ..abstract.api_server import API
@@ -148,7 +149,7 @@ class HTTPAPI(API):
         tx_data: dict = request.get_json()
         tx = Transaction.deserialize(tx_data)
         tx.mark_from_peer()
-        print(f"收到来自广播的tx：{tx}")
+        logger.info(f"收到来自广播的tx：{tx.hash}")
         return self.txpool.add_transaction(tx)
 
     @http_route('/broadcast/block', methods=['POST'])
@@ -156,13 +157,14 @@ class HTTPAPI(API):
         block_data: dict = request.get_json()
         block = Block.deserialize(block_data)
         block.mark_from_peer()
-        print(f"收到来自广播的block：{block}")
+        logger.info(f"收到来自广播的block：{block.hash}")
         return self.blockchain.add_block(block)
 
     @http_route('/broadcast/peer', methods=['POST'])
     def _api_get_broadcast_peer(self):
         peer_info: dict = request.get_json()
         peer = NetworkNodePeer.deserialize(peer_info)
+        logger.info(f"收到来自广播的peer：{peer.hash}")
         return self.peer_registry.add(peer)
 
     def get_self_peer_info(self):

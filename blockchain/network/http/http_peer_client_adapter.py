@@ -10,9 +10,6 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from ...types.core_types import Transaction, Block
 
-# 3rd import
-import requests
-
 # local import
 from ..abstract.peer_client_adapter import PeerClientAdapter
 from ...exceptions import PeerClientAdapterProtocolError
