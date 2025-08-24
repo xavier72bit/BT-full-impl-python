@@ -6,6 +6,9 @@ if TYPE_CHECKING:
     from ..types.core_types import Block
     from ..types.network_types import PeerClient
 
+# std import
+from functools import reduce
+
 # 3rd import
 from loguru import logger
 
@@ -27,6 +30,9 @@ class BlockChain:
 
     def __len__(self):
         return len(self.__chain)
+
+    def __iter__(self):
+        return self.__chain.__iter__()
 
     @property
     def pow_difficulty(self) -> int:
@@ -54,6 +60,10 @@ class BlockChain:
         区块的hash值应当以此值开头
         """
         return "0" * self.pow_difficulty
+
+    @property
+    def summary(self) -> "BlockChainSummary":
+        return BlockChainSummary(self)
 
     def compute_balance(self, wallet_addr) -> int:
         balance = 0
@@ -165,28 +175,18 @@ class BlockChain:
         return [b.serialize() for b in self.__chain]
 
     def serialize_summary(self) -> dict:
-        """
-        区块链的摘要, 结构如下
-        {
-            'total_difficulty': xxxx,
-            'total_length': xxx,
-            'blocks': [
-                {'hash': 'xxxx', 'prev_hash': 'xxx'},
-                {'hash': 'xxxx', 'prev_hash': 'xxxx'}
-            ]
-        }
-        """
-        summary = {
-            'total_difficulty': 0,
-            'total_length': len(self.__chain),
-            'blocks': []
-        }
+        return self.summary.serialize()
 
-        for block in self.__chain:
-            summary['total_difficulty'] += block.difficulty
-            summary['blocks'].append({
-                'hash': block.hash,
-                'prev_hash': block.prev_hash
-            })
 
-        return summary
+class BlockChainSummary:
+    def __init__(self, bc: BlockChain):
+        self.blocks = [b.summary for b in bc]
+        self.total_length = len(bc)
+        self.total_difficulty = reduce(lambda x, y: x+y, [bs.difficulty for bs in self.blocks])
+
+    def serialize(self):
+        return {
+            "blocks": [bs.serialize() for bs in self.blocks],
+            "total_length": self.total_length,
+            "total_difficulty": self.total_difficulty
+        }

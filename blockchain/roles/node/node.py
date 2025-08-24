@@ -67,7 +67,7 @@ class Node:
 
     def _scheduled_function_sync_blockchain(self):
         """
-        轮询所有的邻居节点,获取它们的区块链摘要
+        轮询所有的邻居节点,获取它们的区块链摘要,并调用共识机制处理共识
         """
         pass
 

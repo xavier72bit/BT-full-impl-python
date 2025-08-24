@@ -39,7 +39,11 @@ class Block:
     def __init_system_fields(self):
         ## block系统运行时标记
         object.__setattr__(self, '_runtime_is_from_peer', False)
-        
+
+    @property
+    def summary(self) -> "BlockSummary":
+        return BlockSummary(self)
+
     @property
     def is_from_peer(self):
         return self._runtime_is_from_peer
@@ -131,3 +135,20 @@ class Block:
         将区块标记为从其他node广播得来
         """
         object.__setattr__(self, '_runtime_is_from_peer', True)
+
+
+class BlockSummary:
+    """
+    区块摘要, 只记录: hash, prev_hash, difficulty
+    """
+    def __init__(self, block: Block):
+        self.hash = block.hash
+        self.prev_hash = block.prev_hash
+        self.difficulty = block.difficulty
+
+    def serialize(self) -> dict:
+        return {
+            'difficulty': self.difficulty,
+            'hash': self.hash,
+            'prev_hash': self.prev_hash,
+        }
