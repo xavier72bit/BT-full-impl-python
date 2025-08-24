@@ -139,8 +139,13 @@ class Block:
 
 class BlockSummary:
     """
-    区块摘要, 只记录: hash, prev_hash, difficulty
+    区块摘要信息
     """
+    __slots__ = ['hash', 'prev_hash', 'difficulty']
+
+    # 序列化、反序列化时的字段
+    serialized_fields = ('hash', 'prev_hash', 'difficulty')
+
     def __init__(self, block: Block):
         self.hash = block.hash
         self.prev_hash = block.prev_hash
@@ -152,3 +157,16 @@ class BlockSummary:
             'hash': self.hash,
             'prev_hash': self.prev_hash,
         }
+
+    @classmethod
+    def deserialize(cls, data: dict) -> "BlockSummary | None":
+        if data is None:
+            return None
+
+        bs = object.__new__(cls)
+
+        for f in cls.serialized_fields:
+            fd = data.get(f, None)
+            object.__setattr__(bs, f, fd)
+
+        return bs

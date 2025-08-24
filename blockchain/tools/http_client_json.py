@@ -3,6 +3,7 @@
 # @File   : http_client_json.py
 # @Author : Xavier Wu
 # @Date   : 2025/8/3 14:49
+# 统一执行网络请求，其他的模块如需发送网络请求需经过JSONClient
 
 # std import
 import json

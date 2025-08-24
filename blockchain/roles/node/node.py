@@ -13,6 +13,7 @@ from loguru import logger
 # local import
 from ...core.blockchain import BlockChain
 from ...core.tx_pool import TransactionPool
+from ...core.consensus import POWConsensus
 from ...network.common.peer import NetworkNodePeerRegistry
 from ...network.common.peer_client import PeerClient
 from .scheduler import Scheduler
@@ -60,28 +61,36 @@ class Node:
         self.peer_registry.add(self_peer_info)
         self.self_peer_hash = self_peer_info.hash
 
+        # 初始化共识组件, 同时进行绑定
+        self.consensus = POWConsensus(self)
+
     def set_join_peer(self, protocol: str, addr: str):
         self.join_peer = True
         self.join_peer_protocol = protocol
         self.join_peer_addr = addr
 
-    def _scheduled_function_sync_blockchain(self):
+    def _scheduled_function_do_consensus_check(self):
         """
         轮询所有的邻居节点,获取它们的区块链摘要,并调用共识机制处理共识
         """
-        pass
+        self.peer_client.polling_blockchain_summary()
 
-    def _scheduled_function_ask_alive(self):
+    def _scheduled_function_do_ask_alive(self):
         """
         集群心跳检测
         """
-        pass
+        #TODO
+        logger.info("执行集群心跳检测")
 
     def start_api_server(self):
         self.api.run()
         logger.info(f"API Server 启动")
 
     def start_scheduler(self):
+        self.scheduler.add_interval_job(self._scheduled_function_do_consensus_check, minutes=1, job_name="do_consensus_check")
+        self.scheduler.add_interval_job(self._scheduled_function_do_ask_alive, seconds=30, job_name="do_ask_alive")
+
+        self.scheduler.start()
         logger.info(f"Scheduler 启动")
 
     def start_worker(self):

@@ -45,6 +45,18 @@ class HTTPPeerClientAdapter(PeerClientAdapter):
 
         return json_client.post(url=f"{peer.addr}{api_path}", data=send_peer_info.serialize())
 
+    def get_blockchain_summary(self, peer: NetworkNodePeer):
+        self.check_peer_protocol(peer)
+        api_path = '/blockchain/summary'
+
+        return json_client.get(url=f"{peer.addr}{api_path}")
+
+    def get_blockchain_data(self, peer: NetworkNodePeer):
+        self.check_peer_protocol(peer)
+        api_path = '/blockchain'
+
+        return json_client.get(url=f"{peer.addr}{api_path}")
+
     def join_network(self, peer: NetworkNodePeer, self_peer_info: NetworkNodePeer) -> list[NetworkNodePeer] | None:
         self.check_peer_protocol(peer)
         api_path = '/join'

@@ -42,6 +42,20 @@ class PeerClientAdapter(ABC):
         pass
 
     @abstractmethod
+    def get_blockchain_summary(self, peer: NetworkNodePeer):
+        """
+        获取邻居的区块链摘要数据
+        """
+        pass
+
+    @abstractmethod
+    def get_blockchain_data(self, peer: NetworkNodePeer):
+        """
+        获取邻居的区块链数据
+        """
+        pass
+
+    @abstractmethod
     def join_network(self, peer: NetworkNodePeer, self_peer_info: NetworkNodePeer):
         """
         向指定的网络节点发送加入请求

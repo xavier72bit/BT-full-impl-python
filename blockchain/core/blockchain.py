@@ -14,6 +14,7 @@ from loguru import logger
 
 # local import
 from ..tools.threading_lock import Lock
+from .block import BlockSummary
 
 
 bcl = Lock()
@@ -179,6 +180,11 @@ class BlockChain:
 
 
 class BlockChainSummary:
+    __slots__ = ['blocks', 'total_length', 'total_difficulty']
+
+    # 序列化、反序列化时的字段
+    serialized_fields = ('blocks', 'total_length', 'total_difficulty')
+
     def __init__(self, bc: BlockChain):
         self.blocks = [b.summary for b in bc]
         self.total_length = len(bc)
@@ -190,3 +196,33 @@ class BlockChainSummary:
             "total_length": self.total_length,
             "total_difficulty": self.total_difficulty
         }
+
+    @classmethod
+    def deserialize(cls, data: dict | None) -> "BlockChainSummary | None":
+        """
+        从dict加载数据
+
+        TODO: 反序列化的时候应当进行空值判断，有空值的话就得抛异常
+        TODO: 做一个父类出来吧，Serializable的对象，实现serialize、deserialize的方法
+        TODO: 然后具备serialized_fields的property方法，返回一个序列化定义
+        TODO: {'name': 'xxx', 'type': 'xxx', can_null: True/False}
+        TODO: 当type是另一个Serializable对象时，自动调用对应的serialize、deserialize方法，deserialize判断其值必须为dict
+        """
+        if data is None:
+            return None
+
+        bcs = object.__new__(cls)
+
+        for f in cls.serialized_fields:
+            fd = data.get(f, None)
+
+            if fd is None:
+                continue
+
+            if f == 'blocks':  # 嵌套数据结构特殊处理，调用对应类的反序列化方法
+                object.__setattr__(bcs, f, [BlockSummary.deserialize(d) for d in fd])
+                continue
+
+            object.__setattr__(bcs, f, fd)
+
+        return bcs

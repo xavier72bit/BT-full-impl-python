@@ -7,3 +7,4 @@ if TYPE_CHECKING:
     from ..core.blockchain import BlockChain, BlockChainSummary
     from ..core.transaction import Transaction
     from ..core.tx_pool import TransactionPool
+    from ..core.consensus import POWConsensus

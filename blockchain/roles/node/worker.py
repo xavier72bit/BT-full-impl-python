@@ -10,6 +10,9 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from ...types.node_types import TaskQueue
 
+# std import
+import traceback
+
 # 3rd import
 from loguru import logger
 
@@ -26,5 +29,6 @@ class Worker:
                 task()
             except Exception as e:
                 logger.error(f"任务执行失败: {e}")
+                traceback.print_exc()
             else:
                 logger.info(f"任务执行完成")
