@@ -15,6 +15,7 @@ from loguru import logger
 # local import
 from ..tools.threading_lock import Lock
 from .block import BlockSummary
+from .execute_result import ExecuteResult, ExecuteResultErrorTypes
 
 
 bcl = Lock()
@@ -110,7 +111,7 @@ class BlockChain:
         block_hash = block.compute_hash()
         return block.hash == block_hash
 
-    def valid_new_block(self, block: Block) -> bool:
+    def valid_new_block(self, block: Block) -> ExecuteResult:
         """
         1. 验证Proof of Work的有效性
         2. 验证hash
@@ -120,32 +121,30 @@ class BlockChain:
         :param block:
         :return: bool
         """
-        lb = self.last_block
+        if not self.valid_block_hash(block):
+            msg = f"区块的hash数据验证失败"
+            logger.error(msg)
+            return ExecuteResult(False, ExecuteResultErrorTypes.BLK_INVALID_HASH, msg)
 
-        pow_check: bool = self.valid_proof_of_work(block)
-        tx_check: bool = self.valid_block_transactions(block)
-        hash_check: bool = self.valid_block_hash(block)
+        if not self.valid_proof_of_work(block):
+            msg = f"区块的pow数据验证失败"
+            logger.error(msg)
+            return ExecuteResult(False, ExecuteResultErrorTypes.BLK_INVALID_POW, msg)
 
-        if lb:
-            logger.info(f"非创世区块: {block.hash}, 执行检查")
-            index_check: bool = lb.index == block.index - 1 and block.index == len(self) + 1
-            prev_hash_check: bool = lb.hash == block.prev_hash
+        if not self.valid_block_transactions(block):
+            msg = f"区块内的交易数据验证失败"
+            logger.error(msg)
+            return ExecuteResult(False, ExecuteResultErrorTypes.BLK_INVALID_TX, msg)
 
-            check_result = all([pow_check, hash_check, index_check, tx_check, prev_hash_check])
-            if not check_result:
-                logger.error(f"检查未通过, pow: {pow_check}, hash: {hash_check}, index: {index_check}, prev_hash: {prev_hash_check}, tx: {tx_check}")
-            return check_result
-        else:
-            logger.info(f"创世区块: {block.hash}, 执行检查")
-            index_check: bool = block.index == 1
+        if self.last_block and (not self.last_block.hash == block.prev_hash):
+            msg = f"区块链完整性(prev_hash)数据验证失败"
+            logger.error(msg)
+            return ExecuteResult(False, ExecuteResultErrorTypes.BLK_INVALID_PREV_HASH, msg)
 
-            check_result = all([pow_check, index_check, tx_check, hash_check])
-            if not check_result:
-                logger.error(f"检查未通过, pow: {pow_check}, index: {index_check}, tx: {tx_check}, hash: {hash_check}")
-            return check_result
+        return ExecuteResult(True, None, None)
 
     @bcl.func_lock
-    def add_block(self, block: Block | None) -> bool:
+    def add_block(self, block: Block | None) -> ExecuteResult:
         """
 
         :return: bool
@@ -154,23 +153,28 @@ class BlockChain:
 
         # block type check
         if block is None:
-            return False
+            msg = "block为None"
+            logger.error(msg)
+            return ExecuteResult(False, ExecuteResultErrorTypes.BLK_INVALID_DATA, msg)
 
         # block validation check
-        if not self.valid_new_block(block):
-            return False
+        valid_result: ExecuteResult = self.valid_new_block(block)
+        if not valid_result.success:
+            return valid_result
 
         # add block & mark tx verified
         # TODO: 这里应该做一下延迟处理，添加了一个块之后，将第n个之前的块内的所有交易标记为“已确认”
         self.__chain.append(block)
         current_txpool.mark_tx(block)
-        logger.info(f"区块{block.hash}已上链")
+        msg = f"区块{block.hash}已上链"
+        logger.info(msg)
 
         # 广播区块
         if not block.is_from_peer:
             self.tq.put(self.peer_client.broadcast_block, block)
             logger.info(f"区块{block.hash}广播任务已进入任务队列")
-        return True
+
+        return ExecuteResult(True, None, msg)
 
     def serialize(self) -> list[dict]:
         return [b.serialize() for b in self.__chain]

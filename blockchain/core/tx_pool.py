@@ -16,6 +16,7 @@ from loguru import logger
 # local import
 from .transaction import Transaction
 from ..tools.threading_lock import Lock
+from .execute_result import ExecuteResult, ExecuteResultErrorTypes
 
 
 txl = Lock()
@@ -37,36 +38,40 @@ class TransactionPool:
         return [tx.hash for tx in self.__transactions]
 
     @txl.func_lock
-    def add_transaction(self, transaction: Transaction) -> bool:
+    def add_transaction(self, transaction: Transaction) -> ExecuteResult:
         # 交易重复检查
         all_txs_hash = self.get_all_txs_hash()
         if transaction.hash in all_txs_hash:
-            logger.error(f"交易重复, 交易信息已丢弃: {transaction.serialize()}")
-            return False
+            msg = f"交易重复, 交易信息已丢弃: {transaction.serialize()}"
+            logger.error(msg)
+            return ExecuteResult(success=False, error_type=ExecuteResultErrorTypes.TX_REPEAT, message=msg)
 
         # 支付方为None的情况只有空投奖励,这里只接受其他节点同步过来的数据
         if (transaction.saddr is None) and (not transaction.is_from_peer):
-            logger.error(f"伪造系统奖励，交易信息已丢弃: {transaction.serialize()}")
-            return False
+            msg = f"伪造系统奖励，交易信息已丢弃: {transaction.serialize()}"
+            logger.error(msg)
+            return ExecuteResult(success=False, error_type=ExecuteResultErrorTypes.TX_SADDR_NONE, message=msg)
 
         # 余额check(系统奖励不进行check)
         if transaction.saddr is not None:
             balance = self.current_node.blockchain.compute_balance(transaction.saddr)
             if transaction.amount > balance:
-                logger.error(f'{transaction.saddr}的链上余额: {balance}, 无法完成本次交易: {transaction.serialize()}')
-                return False
+                msg = f'{transaction.saddr}的链上余额: {balance}, 无法完成本次交易: {transaction.serialize()}'
+                logger.error(msg)
+                return ExecuteResult(False, ExecuteResultErrorTypes.TX_INSUFFICIENT_BALANCE, msg)
 
         # 交易签名check
         if not transaction.verify_sign():
-            logger.error(f'交易签名校验失败, 交易信息: {transaction.serialize()}')
-            return False
+            msg = f'交易签名校验失败, 交易信息: {transaction.serialize()}'
+            logger.error(msg)
+            return ExecuteResult(False, ExecuteResultErrorTypes.TX_INVALID_SIGNATURE, msg)
 
         self.__transactions.append(transaction)
-        logger.info(f"交易信息已进入本机交易池, 交易信息: {transaction.serialize()}")
+        msg = f"交易信息已进入本机交易池, 交易信息: {transaction.serialize()}"
         if not transaction.is_from_peer:  # 广播交易
             self.tq.put(self.peer_client.broadcast_tx, transaction)
             logger.info(f"交易{transaction.hash}广播任务已进入任务队列")
-        return True
+        return ExecuteResult(True, None, msg)
 
     @txl.func_lock
     def mark_tx(self, block: Block):
@@ -104,7 +109,7 @@ class TransactionPool:
         return tuple(self.__transactions + [reward_tx])
 
     @txl.func_lock
-    def get_prize(self, raddr: str, amount: int) -> bool:
+    def get_prize(self, raddr: str, amount: int) -> ExecuteResult:
         """
         空投奖励
         """
@@ -118,7 +123,7 @@ class TransactionPool:
 
         # 广播这条奖励
         self.tq.put(self.peer_client.broadcast_tx, prize_tx)
-        return True
+        return ExecuteResult(True, None, None)
 
     def to_json(self) -> str:
         return json.dumps([tx.serialize() for tx in self.__transactions], sort_keys=True)

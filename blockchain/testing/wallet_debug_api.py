@@ -11,8 +11,45 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from ..types.role_types import Wallet
 
+# std import
+import functools
+
+# 3rd import
+from flask import Flask, jsonify, request
+
+# local import
+from .debug_api_result import Result
+
+
+wallet_debug_server = Flask('wallet-debug-api-server')
+router_registry = {}
+def http_route(rule, **options):
+    def decorator(method):
+        """
+        标记Node类的方法，将其与Flask.route绑定
+        并自动处理将返回值：
+            1. 正常请求: 包装为json字符串
+            2. TODO: 出现异常，返回异常信息
+        """
+        router_registry[method.__name__] = (rule, options)
+        @functools.wraps(method)
+        def wrapper(self, *args, **kwargs):
+            res = method(self, *args, **kwargs)
+            return jsonify(res)
+        return wrapper
+    return decorator
+
 
 class WalletDebugAPI:
-
     def __init__(self, wallet: Wallet):
         self.wallet = wallet
+
+    @http_route('/generate_tx', methods=['POST'])
+    def generate_tx(self):
+        d: dict = request.get_json()
+        raddr: str | None = d.get('raddr')
+        amout: int | None = d.get('amount')
+
+        if not all([raddr, amout]):
+            return Result(success=False, message="缺少必要参数: 'raddr', 'amount'").serialize()
+

@@ -5,6 +5,12 @@
 # @Date   : 2025/8/13 20:35
 # 运行在HTTP协议下的API, 服务器使用Flask
 
+# types hint
+from __future__ import annotations
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from ...types.core_types import ExecuteResult
+
 # std import
 import functools
 
@@ -101,7 +107,8 @@ class HTTPAPI(API):
     def _api_add_block(self):
         block_data: dict = request.get_json()
         block = Block.deserialize(block_data)
-        return self.blockchain.add_block(block)
+        res: ExecuteResult = self.blockchain.add_block(block)
+        return res.serialize()
 
     @http_route('/mining_data/<string:miner_addr>', methods=['GET'])
     def _api_apply_mining_data(self, miner_addr):
@@ -134,7 +141,8 @@ class HTTPAPI(API):
     def _api_add_transaction(self):
         tx_data: dict = request.get_json()
         tx = Transaction.deserialize(tx_data)
-        return self.txpool.add_transaction(tx)
+        res: ExecuteResult = self.txpool.add_transaction(tx)
+        return res.serialize()
 
     @http_route('/balance/<string:addr>')
     def _api_get_balance(self, addr):
@@ -142,7 +150,8 @@ class HTTPAPI(API):
 
     @http_route('/prize/<string:addr>')
     def _api_prize(self, addr):
-        return self.txpool.get_prize(addr, 100)
+        res: ExecuteResult = self.txpool.get_prize(addr, 100)
+        return res.serialize()
 
     @http_route('/broadcast/tx', methods=['POST'])
     def _api_get_broadcast_tx(self):
@@ -150,7 +159,8 @@ class HTTPAPI(API):
         tx = Transaction.deserialize(tx_data)
         tx.mark_from_peer()
         logger.info(f"收到来自广播的tx：{tx.hash}")
-        return self.txpool.add_transaction(tx)
+        res: ExecuteResult = self.txpool.add_transaction(tx)
+        return res.serialize()
 
     @http_route('/broadcast/block', methods=['POST'])
     def _api_get_broadcast_block(self):
@@ -158,7 +168,8 @@ class HTTPAPI(API):
         block = Block.deserialize(block_data)
         block.mark_from_peer()
         logger.info(f"收到来自广播的block：{block.hash}")
-        return self.blockchain.add_block(block)
+        res: ExecuteResult = self.blockchain.add_block(block)
+        return res.serialize()
 
     @http_route('/broadcast/peer', methods=['POST'])
     def _api_get_broadcast_peer(self):
