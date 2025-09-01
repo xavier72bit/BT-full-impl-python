@@ -2,7 +2,7 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
-    from ..types.node_types import Node, TaskQueue
+    from ..types.role_types import Node, TaskQueue
     from ..types.core_types import Block
     from ..types.network_types import PeerClient
 

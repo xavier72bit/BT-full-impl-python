@@ -8,7 +8,7 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
-    from ...types.node_types import TaskQueue
+    from ...types.role_types import TaskQueue
 
 # std import
 import traceback

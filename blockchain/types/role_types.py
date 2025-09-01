@@ -6,3 +6,7 @@ if TYPE_CHECKING:
     from ..roles.node.task_queue import TaskQueue
     from ..roles.node.scheduler import Scheduler
     from ..roles.node.worker import Worker
+
+    from ..roles.wallet.wallet import Wallet
+
+    from ..roles.mining.pow import ProofOfWorkMining

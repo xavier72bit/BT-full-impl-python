@@ -2,7 +2,7 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
-    from ...types.node_types import Node
+    from ...types.role_types import Node
     from ...types.network_types import NetworkNodePeer
 
 # std import
