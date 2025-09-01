@@ -4,11 +4,13 @@ import argparse
 
 # local import
 from blockchain.roles.node.node import Node
+from blockchain.roles.wallet.wallet import Wallet
+from blockchain.roles.mining.pow import ProofOfWorkMining
 
 # 角色支持的类型定义 Const
 SUPPORTED_ROLE_TYPES = {
     "wallet": [],
-    "miner": [],
+    "miner": [],  # TODO: 这里可以选择不同的工作量证明机制, 比如PoW, PoS
     "node": ["http"],
 }
 
@@ -28,6 +30,7 @@ parser.add_argument(
 parser.add_argument(
     "-t", "--type",
     type=str,
+    default=None,
     help="Specify role type (depends on role)"
 )
 
@@ -60,13 +63,43 @@ parser.add_argument(
     help="Address of the peer node to connect to (need to add protocol, e.g. http://127.0.0.1)"
 )
 
+parser.add_argument(
+    "--with-genesis-block",
+    action="store_true",
+    help="When the node starts, whether to automatically generate the genesis block"
+)
+
+parser.add_argument(
+    "--debug-api-server",
+    action="store_true",
+    help="Choose whether to enable the Debug API Server (valid only for wallet and miner)"
+)
+
+parser.add_argument(
+    "--public-key",
+    type=str,
+    default=None,
+    help="Public key address (used by miners/wallets)"
+)
+
+parser.add_argument(
+    "--private-key",
+    type=str,
+    default=None,
+    help="Private key (used by wallets)"
+)
+
 ################################################
 # main functions
 ################################################
 
-def run_wallet(_type):
-    print(f"Running wallet (type={_type})")
-    # TODO: 实现钱包逻辑
+def run_wallet(public_key, secret_key, enable_debug_api_server: bool, host, port):
+    # TODO: Wallet GUI界面
+    wallet = Wallet(public_key, secret_key)
+    if enable_debug_api_server:
+        from blockchain.testing.wallet_debug_api import WalletDebugAPI
+        server = WalletDebugAPI(wallet, host, port)
+        server.run()
 
 def run_miner(_type):
     print(f"Running miner (type={_type})")
@@ -102,7 +135,7 @@ def main():
 
     # 根据角色分发
     if args.role == "wallet":
-        run_wallet(args.type)
+        run_wallet(args.public_key, args.private_key, args.debug_api_server, args.host, args.port)
 
     elif args.role == "miner":
         run_miner(args.type)

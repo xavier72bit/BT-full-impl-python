@@ -31,6 +31,8 @@ wallet_a = Wallet.get_new_wallet()
 wallet_b = Wallet.get_new_wallet()
 wallet_c = Wallet.get_new_wallet()
 wallets = [wallet_a, wallet_b, wallet_c]
+print(f"wallet A pubkey: <{wallet_a.pubkey}>")
+print(f"wallet A seckey: <{wallet_a.seckey}>")
 
 wallet_miner = Wallet.get_new_wallet()
 miner = ProofOfWorkMining(wallet_miner.pubkey)

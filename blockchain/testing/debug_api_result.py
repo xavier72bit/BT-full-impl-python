@@ -5,11 +5,13 @@
 # @Date   : 2025/9/1 13:01
 
 from dataclasses import dataclass, asdict
+from typing import Any
 
 @dataclass
 class Result:
     success: bool
     message: str
+    data: Any
 
     def serialize(self):
         return asdict(self)
