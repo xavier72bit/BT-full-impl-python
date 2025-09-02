@@ -163,7 +163,8 @@ def main():
     if args.role == "wallet":
         run_wallet(
             args.public_key, args.private_key,
-            args.using_testing_nexus, args.host, args.port, args.testing_nexus_addr
+            args.host, args.port,
+            args.using_testing_nexus, args.testing_nexus_addr
         )
 
     elif args.role == "miner":
