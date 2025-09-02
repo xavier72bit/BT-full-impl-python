@@ -24,3 +24,11 @@ class PeerClientAdapterProtocolError(Exception):
     PeerClient所运行的网络协议与Adapter不匹配
     """
     pass
+
+
+# Testing Nexus
+class TestingNexusAddrNotSpecifiedError(Exception):
+    """
+    设置开启了debug api 但未设置 testing nexus测试中心的地址
+    """
+    pass

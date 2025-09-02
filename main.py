@@ -76,6 +76,13 @@ parser.add_argument(
 )
 
 parser.add_argument(
+    "--testing-nexus-addr",
+    type=str,
+    default=None,
+    help="Specify the API address of the testing nexus"
+)
+
+parser.add_argument(
     "--public-key",
     type=str,
     default=None,
@@ -93,13 +100,19 @@ parser.add_argument(
 # main functions
 ################################################
 
-def run_wallet(public_key, secret_key, enable_debug_api_server: bool, host, port):
+def run_wallet(
+        # wallet info
+        public_key, secret_key,
+        # testing nexus debug
+        enable_debug_api_server: bool, host, port,
+        testing_nexus_addr
+    ):
     # TODO: Wallet GUI界面
     wallet = Wallet(public_key, secret_key)
     if enable_debug_api_server:
         from blockchain.testing.wallet_debug_api import WalletDebugAPI
         server = WalletDebugAPI(wallet, host, port)
-        server.run()
+        server.run(testing_nexus_addr)
 
 def run_miner(_type):
     print(f"Running miner (type={_type})")
@@ -135,7 +148,10 @@ def main():
 
     # 根据角色分发
     if args.role == "wallet":
-        run_wallet(args.public_key, args.private_key, args.debug_api_server, args.host, args.port)
+        run_wallet(
+            args.public_key, args.private_key,
+            args.debug_api_server, args.host, args.port, args.testing_nexus_addr
+        )
 
     elif args.role == "miner":
         run_miner(args.type)

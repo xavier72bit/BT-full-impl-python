@@ -23,7 +23,7 @@ class Worker:
 
     def run(self):
         while True:
-            task = self.tq.get()
+            task = self.tq.get()  # DEV NOTE: 任务队列是空的, 此处实际上是阻塞的
             try:
                 logger.info(f"获取到task: {task}")
                 task()

@@ -20,6 +20,11 @@ from flask import Flask, jsonify, request
 
 # local import
 from .debug_api_result import Result
+from ..tools.http_client_json import JSONClient
+from ..exceptions import TestingNexusAddrNotSpecifiedError
+
+
+json_client = JSONClient()
 
 
 wallet_debug_server = Flask('wallet-debug-api-server')
@@ -74,7 +79,16 @@ class WalletDebugAPI:
         self._register_router()
         wallet_debug_server.run(host=self.host, port=self.port)
 
-    def run(self):
+    def run(self, testing_nexus_addr):
+        if not testing_nexus_addr:
+            raise TestingNexusAddrNotSpecifiedError("开启debug api，但未指定testing nexus的地址")
+
+        json_client.post(f"{testing_nexus_addr}/registry/wallet", data={
+            'publicKey': self.wallet.pubkey,
+            'privateKey': self.wallet.seckey,
+            'apiAddress': f"http://{self.host}:{self.port}/"
+        })
+
         server_thread = threading.Thread(target=self.start_server, daemon=True)
         server_thread.start()
         server_thread.join()
