@@ -192,7 +192,7 @@ class BlockChainSummary:
     def __init__(self, bc: BlockChain):
         self.blocks = [b.summary for b in bc]
         self.total_length = len(bc)
-        self.total_difficulty = reduce(lambda x, y: x+y, [bs.difficulty for bs in self.blocks])
+        self.total_difficulty = reduce(lambda x, y: x+y, [bs.difficulty for bs in self.blocks]) if self.blocks else 0
 
     def serialize(self):
         return {
