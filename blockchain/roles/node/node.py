@@ -19,6 +19,10 @@ from ...network.common.peer_client import PeerClient
 from .scheduler import Scheduler
 from .task_queue import TaskQueue
 from .worker import Worker
+from ...tools.http_client_json import JSONClient
+from ...exceptions import TestingNexusAddrNotSpecifiedError
+
+json_client = JSONClient()
 
 
 class Node:
@@ -100,6 +104,15 @@ class Node:
         worker_thread = threading.Thread(target=self.worker.run, daemon=True)
         worker_thread.start()
         logger.info(f"Worker Thread 启动")
+
+    def registry_to_testing_nexus(self, testing_nexus_addr):
+        if not testing_nexus_addr:
+            raise TestingNexusAddrNotSpecifiedError("未指定testing_nexus_addr")
+
+        json_client.post(f"{testing_nexus_addr}/registry/node", data={
+            # TODO: 所有的API，无论是network节点之间的API还是nexus testing API，都应实现一个返回调用地址的方法
+            "apiAddress": f"http://{self.api.host}:{self.api.port}"
+        })
 
     def start(self):
         if self.join_peer:

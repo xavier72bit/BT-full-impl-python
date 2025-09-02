@@ -75,11 +75,16 @@ class WalletDebugAPI:
             data=self.wallet.generate_transaction(raddr, amout)
         ).serialize()
 
-    def start_server(self):
+    def run_debug_api_server(self):
         self._register_router()
         wallet_debug_server.run(host=self.host, port=self.port)
 
-    def run(self, testing_nexus_addr):
+    def run(self):
+        server_thread = threading.Thread(target=self.run_debug_api_server, daemon=True)
+        server_thread.start()
+        server_thread.join()
+
+    def start(self, testing_nexus_addr):
         if not testing_nexus_addr:
             raise TestingNexusAddrNotSpecifiedError("开启debug api，但未指定testing nexus的地址")
 
@@ -89,6 +94,4 @@ class WalletDebugAPI:
             'apiAddress': f"http://{self.host}:{self.port}/"
         })
 
-        server_thread = threading.Thread(target=self.start_server, daemon=True)
-        server_thread.start()
-        server_thread.join()
+        self.run()

@@ -70,9 +70,9 @@ parser.add_argument(
 )
 
 parser.add_argument(
-    "--debug-api-server",
+    "--using-testing-nexus",
     action="store_true",
-    help="Choose whether to enable the Debug API Server (valid only for wallet and miner)"
+    help="Choose whether to enable the Debug API Server (valid only for wallet and miner) or registry to testing nexus"
 )
 
 parser.add_argument(
@@ -103,22 +103,28 @@ parser.add_argument(
 def run_wallet(
         # wallet info
         public_key, secret_key,
-        # testing nexus debug
-        enable_debug_api_server: bool, host, port,
-        testing_nexus_addr
+        # debug api
+        host, port,
+        # testing nexus connection
+        using_testing_nexus: bool, testing_nexus_addr
     ):
     # TODO: Wallet GUI界面
     wallet = Wallet(public_key, secret_key)
-    if enable_debug_api_server:
+    if using_testing_nexus:
         from blockchain.testing.wallet_debug_api import WalletDebugAPI
         server = WalletDebugAPI(wallet, host, port)
-        server.run(testing_nexus_addr)
+        server.start(testing_nexus_addr)
 
 def run_miner(_type):
     print(f"Running miner (type={_type})")
     # TODO: 实现矿工逻辑
 
-def run_node_http(host, port, join_peer_protocol=None, join_peer_addr=None):
+def run_node_http(
+        # node info
+        host, port, join_peer_protocol=None, join_peer_addr=None,
+        # testing nexus connection
+        using_testing_nexus: bool = False, testing_nexus_addr = None
+    ):
     from blockchain.network.http.http_api_server import HTTPAPI
     http_api = HTTPAPI(host, port)
     node = Node(api=http_api)
@@ -126,7 +132,14 @@ def run_node_http(host, port, join_peer_protocol=None, join_peer_addr=None):
     if join_peer_addr and join_peer_protocol:
         node.set_join_peer(join_peer_protocol, join_peer_addr)
 
+    if using_testing_nexus:
+        node.registry_to_testing_nexus(testing_nexus_addr)
+
     node.start()
+
+################################################
+# main entrypoint
+################################################
 
 def main():
     args = parser.parse_args()
@@ -150,7 +163,7 @@ def main():
     if args.role == "wallet":
         run_wallet(
             args.public_key, args.private_key,
-            args.debug_api_server, args.host, args.port, args.testing_nexus_addr
+            args.using_testing_nexus, args.host, args.port, args.testing_nexus_addr
         )
 
     elif args.role == "miner":
@@ -158,7 +171,10 @@ def main():
 
     elif args.role == "node":
         if args.type == "http":
-            run_node_http(args.host, args.port, args.join_peer_protocol, args.join_peer_addr)
+            run_node_http(
+                args.host, args.port, args.join_peer_protocol, args.join_peer_addr,
+                args.using_testing_nexus, args.testing_nexus_addr
+            )
         else:
             print(f"Node type '{args.type}' is not supported.", file=sys.stderr)
             sys.exit(1)
