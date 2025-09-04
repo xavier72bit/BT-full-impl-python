@@ -101,13 +101,20 @@ parser.add_argument(
     help="generates an electronic wallet (Only supports -r wallet)"
 )
 
+parser.add_argument(
+    "--connect-node-addr",
+    type=str,
+    default=None,
+    help="wallet, miner connected to the node address"
+)
+
 ################################################
 # main functions
 ################################################
 
 def run_wallet(
         # wallet info
-        public_key, secret_key,
+        public_key, secret_key, connect_node_addr,
         # debug api
         host, port,
         # testing nexus connection
@@ -115,7 +122,11 @@ def run_wallet(
     ):
     # TODO: Wallet GUI界面
     wallet = Wallet(public_key, secret_key)
-    if using_testing_nexus:
+
+    if connect_node_addr:
+        wallet.login(connect_node_addr)
+
+    if using_testing_nexus:  # 最后执行
         from blockchain.testing.wallet_debug_api import WalletDebugAPI
         server = WalletDebugAPI(wallet, host, port)
         server.start(testing_nexus_addr)
@@ -178,7 +189,7 @@ def main():
             return
 
         run_wallet(
-            args.public_key, args.private_key,
+            args.public_key, args.private_key, args.connect_node_addr,
             args.host, args.port,
             args.using_testing_nexus, args.testing_nexus_addr
         )

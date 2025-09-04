@@ -1,6 +1,9 @@
 # std import
 import time
 
+# 3rd import
+from loguru import logger
+
 # local import
 from blockchain.core.transaction import Transaction
 from blockchain.tools.ecdsa_sign_tools import ECDSATool
@@ -20,8 +23,15 @@ class Wallet:
         self.pubkey = public_key
         self.seckey = secret_key
 
-        # TODO: 暂时写死
-        self.node_addr = 'http://127.0.0.1:5000'
+        self.node_addr = None
+
+    def login(self, node_addr):
+        if json_client.get(f"{node_addr}/alive"):
+            logger.info(f"登录到node: {node_addr}")
+            self.node_addr = node_addr
+
+    def logout(self):
+        self.node_addr = None
 
     def generate_transaction(self, raddr, amount):
         """
