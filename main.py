@@ -5,7 +5,6 @@ import argparse
 # local import
 from blockchain.roles.node.node import Node
 from blockchain.roles.wallet.wallet import Wallet
-from blockchain.roles.mining.pow import ProofOfWorkMining
 
 # 角色支持的类型定义 Const
 SUPPORTED_ROLE_TYPES = {
@@ -96,6 +95,12 @@ parser.add_argument(
     help="Private key (used by wallets)"
 )
 
+parser.add_argument(
+    "--generate-wallet",
+    action="store_true",
+    help="generates an electronic wallet (Only supports -r wallet)"
+)
+
 ################################################
 # main functions
 ################################################
@@ -115,6 +120,11 @@ def run_wallet(
         server = WalletDebugAPI(wallet, host, port)
         server.start(testing_nexus_addr)
 
+def generate_wallet():
+    new_wallet = Wallet.get_new_wallet()
+    print(f"Public Key(wallet address): <{new_wallet.pubkey}>")
+    print(f"Secret Key(wallet password, Never disclose!!): <{new_wallet.seckey}>")
+
 def run_miner(_type):
     print(f"Running miner (type={_type})")
     # TODO: 实现矿工逻辑
@@ -123,11 +133,13 @@ def run_node_http(
         # node info
         host, port, join_peer_protocol=None, join_peer_addr=None,
         # testing nexus connection
-        using_testing_nexus: bool = False, testing_nexus_addr = None
+        using_testing_nexus: bool = False, testing_nexus_addr = None,
+        # blockchain info
+        with_genesis_block: bool = False
     ):
     from blockchain.network.http.http_api_server import HTTPAPI
     http_api = HTTPAPI(host, port)
-    node = Node(api=http_api)
+    node = Node(api=http_api, with_genesis_block=with_genesis_block)
 
     if join_peer_addr and join_peer_protocol:
         node.set_join_peer(join_peer_protocol, join_peer_addr)
@@ -161,6 +173,10 @@ def main():
 
     # 根据角色分发
     if args.role == "wallet":
+        if args.generate_wallet:
+            generate_wallet()
+            return
+
         run_wallet(
             args.public_key, args.private_key,
             args.host, args.port,
@@ -172,9 +188,11 @@ def main():
 
     elif args.role == "node":
         if args.type == "http":
+            with_gb = True if args.with_genesis_block else False
             run_node_http(
                 args.host, args.port, args.join_peer_protocol, args.join_peer_addr,
-                args.using_testing_nexus, args.testing_nexus_addr
+                args.using_testing_nexus, args.testing_nexus_addr,
+                with_gb
             )
         else:
             print(f"Node type '{args.type}' is not supported.", file=sys.stderr)

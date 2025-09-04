@@ -11,15 +11,11 @@ json_client = JSONClient()
 
 
 class ProofOfWorkMining:
-    def __init__(self, miner_addr: str):
+    def __init__(self, miner_addr: str, node_addr: str):
         self.miner_addr = miner_addr
-
-        # TODO: 暂时写死
-        self.node_addr = 'http://127.0.0.1:5000'
+        self.node_addr = node_addr
         self.pow_check_str = None
         self.difficulty = None
-
-        self.get_difficulty()
 
     def get_difficulty(self):
         pow_difficulty = json_client.get(f"{self.node_addr}/pow_difficulty")
@@ -27,9 +23,11 @@ class ProofOfWorkMining:
         self.difficulty = pow_difficulty['difficulty']
 
     def check_proof(self, block: Block) -> bool:
+        if self.pow_check_str is None or self.difficulty is None:
+            self.get_difficulty()
         return block.hash.startswith(self.pow_check_str)
 
-    def mine_block(self) -> Block | None:
+    def mine_block(self, mining_data = None) -> Block | None:
         """
         :return:
         """

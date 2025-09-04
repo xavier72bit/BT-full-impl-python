@@ -5,6 +5,7 @@ if TYPE_CHECKING:
     from ...types.network_types import API
 
 # std import
+import time
 import threading
 
 # 3rd import
@@ -12,6 +13,7 @@ from loguru import logger
 
 # local import
 from ...core.blockchain import BlockChain
+from ...core.block import Block
 from ...core.tx_pool import TransactionPool
 from ...core.consensus import POWConsensus
 from ...network.common.peer import NetworkNodePeerRegistry
@@ -21,8 +23,11 @@ from .task_queue import TaskQueue
 from .worker import Worker
 from ...tools.http_client_json import JSONClient
 from ...exceptions import TestingNexusAddrNotSpecifiedError
+from ...core.transaction import Transaction
+
 
 json_client = JSONClient()
+__all__ = ["Node"]
 
 
 class Node:
@@ -33,7 +38,7 @@ class Node:
     3. api server
     4. scheduler
     """
-    def __init__(self, api: API):
+    def __init__(self, api: API, with_genesis_block: bool):
         """
         由于各个组件资源之间存在相互依赖的关系，这里的执行顺序不可以随意修改
         """
@@ -55,6 +60,8 @@ class Node:
         # 初始化Core组件(最后初始化，它们依赖task_queue)
         self.blockchain = BlockChain(current_node=self)
         self.txpool = TransactionPool(current_node=self)
+        if with_genesis_block:
+            self.generate_genesis_block()
 
         # 设置API, 并建立绑定关系
         self.api = api
@@ -109,10 +116,12 @@ class Node:
         if not testing_nexus_addr:
             raise TestingNexusAddrNotSpecifiedError("未指定testing_nexus_addr")
 
-        json_client.post(f"{testing_nexus_addr}/registry/node", data={
+        res = json_client.post(f"{testing_nexus_addr}/registry/node", data={
             # TODO: 所有的API，无论是network节点之间的API还是nexus testing API，都应实现一个返回调用地址的方法
             "apiAddress": f"http://{self.api.host}:{self.api.port}"
         })
+
+        logger.info(f"注册结果: {res}")
 
     def start(self):
         if self.join_peer:
@@ -125,3 +134,33 @@ class Node:
         self.start_scheduler()
         self.start_worker()
         self.start_api_server()
+
+    def generate_genesis_block(self):
+        if len(self.blockchain):
+            logger.warning("无法生成创世区块，区块链非空")
+            return
+
+        # TODO: 最开始的测试阶段, hardcode, 私钥备忘: 082484320cf453585e768e16e87837edeb2ab8aa502a951354b527c57f5b81a4
+        genesis_address = "49ea27e563177bd60bd9fe529f0787e3323daea48a8d44f7e5094dbc6049fd039855ad607f43a5ae31f63fb098ce5b137b9509c6ab6775d8d11cd1f849ad24d4"
+        genesis_transaction = Transaction(saddr=None, raddr=genesis_address, amount=10000, timestamp=int(time.time()))
+
+
+        # 执行pow的挖矿循环
+        nonce = 0
+        while True:
+            genesis_block = Block(
+                index = 1,
+                timestamp=int(time.time()),
+                transactions=[genesis_transaction],
+                nonce=nonce,
+                prev_hash=None,
+                difficulty=self.blockchain.pow_difficulty
+            )
+            nonce += 1
+
+            if genesis_block.hash.startswith(self.blockchain.pow_check):
+                break
+
+        logger.info(f"创世区块已创建 {genesis_block.serialize()}")
+
+        self.blockchain.add_block(genesis_block)
