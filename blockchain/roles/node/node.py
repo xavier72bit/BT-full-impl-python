@@ -162,5 +162,6 @@ class Node:
                 break
 
         logger.info(f"创世区块已创建 {genesis_block.serialize()}")
+        genesis_block.mark_genesis()
 
         self.blockchain.add_block(genesis_block)

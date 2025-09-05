@@ -162,6 +162,18 @@ class BlockChain:
         if not valid_result.success:
             return valid_result
 
+        # empty blockchain check
+        if self.last_block is None and not block.is_genesis:
+            msg = f"当前区块链上无数据，prev hash校验失败：{block.hash}"
+            logger.error(msg)
+            return ExecuteResult(False, ExecuteResultErrorTypes.BLK_INVALID_PREV_HASH, msg)
+
+        # prev hash check
+        if self.last_block is not None and self.last_block.hash != block.prev_hash:
+            msg = f"prev hash校验失败, {self.last_block.hash} -> {block.hash}"
+            logger.error(msg)
+            return ExecuteResult(False, ExecuteResultErrorTypes.BLK_INVALID_PREV_HASH, msg)
+
         # add block & mark tx verified
         # TODO: 这里应该做一下延迟处理，添加了一个块之后，将第n个之前的块内的所有交易标记为“已确认”
         self.__chain.append(block)

@@ -38,3 +38,11 @@ class ExecuteResult:
 
     def serialize(self):
         return asdict(self)
+
+    @classmethod
+    def deserialize(cls, data: dict) -> "ExecuteResult":
+        return cls(
+            success=data.get("success", False),
+            error_type=data.get("error_type", None),
+            message=data.get("message", None)
+        )

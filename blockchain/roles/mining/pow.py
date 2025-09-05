@@ -1,6 +1,9 @@
 # std import
 from time import time
 
+# 3rd import
+from loguru import logger
+
 # local import
 from blockchain.core.block import Block
 from blockchain.core.execute_result import ExecuteResult
@@ -38,6 +41,7 @@ class ProofOfWorkMining:
         ]
 
         if not mining_data:
+            logger.info(f"交易池数据为空")
             return None
 
         nonce = 0
@@ -61,4 +65,6 @@ class ProofOfWorkMining:
         block = self.mine_block()
         if block is None:
             return ExecuteResult(success=False, error_type=None, message="交易池无数据")
-        return json_client.post(f"{self.node_addr}/block", data=block.serialize())
+        else:
+            logger.info(f"成功挖出区块: {block.summary.serialize()}")
+            return ExecuteResult.deserialize(json_client.post(f"{self.node_addr}/block", data=block.serialize()))

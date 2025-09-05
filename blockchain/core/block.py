@@ -13,11 +13,11 @@ class Block:
     """
     __slots__ = [
         'index', 'timestamp', 'transactions', 'nonce', 'prev_hash', 'hash', 'difficulty',
-        '_runtime_is_from_peer'
+        '_runtime_is_from_peer', '_runtime_is_genesis'
     ]
     frozen_fields = (
         'index', 'timestamp', 'transactions', 'nonce', 'prev_hash', 'hash', 'difficulty',
-        '_runtime_is_from_peer'
+        '_runtime_is_from_peer', '_runtime_is_genesis'
     )
     # 序列化、反序列化时的字段
     serialized_fields = ('index', 'timestamp', 'transactions', 'nonce', 'prev_hash', 'hash', 'difficulty',)
@@ -39,6 +39,7 @@ class Block:
     def __init_system_fields(self):
         ## block系统运行时标记
         object.__setattr__(self, '_runtime_is_from_peer', False)
+        object.__setattr__(self, '_runtime_is_genesis', False)
 
     @property
     def summary(self) -> "BlockSummary":
@@ -48,8 +49,15 @@ class Block:
     def is_from_peer(self):
         return self._runtime_is_from_peer
 
+    @property
+    def is_genesis(self):
+        return self._runtime_is_genesis
+
     def mark_from_peer(self):
         object.__setattr__(self, '_runtime_is_from_peer', True)
+
+    def mark_genesis(self):
+        object.__setattr__(self, '_runtime_is_genesis', True)
 
     def __setattr__(self, name, value):
         if name in self.frozen_fields:
@@ -129,12 +137,6 @@ class Block:
             d[f] = getattr(self, f)
 
         return d
-
-    def set_from_peer(self):
-        """
-        将区块标记为从其他node广播得来
-        """
-        object.__setattr__(self, '_runtime_is_from_peer', True)
 
 
 class BlockSummary:
