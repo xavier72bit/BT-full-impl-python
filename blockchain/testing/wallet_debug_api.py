@@ -91,7 +91,8 @@ class WalletDebugAPI:
         json_client.post(f"{testing_nexus_addr}/registry/wallet", data={
             'publicKey': self.wallet.pubkey,
             'privateKey': self.wallet.seckey,
-            'apiAddress': f"http://{self.host}:{self.port}/"
+            'apiAddress': f"http://{self.host}:{self.port}/",
+            "balance": self.wallet.get_balance()
         })
 
         self.run()

@@ -104,7 +104,7 @@ class HTTPAPI(API):
         return self.blockchain.serialize_summary()
 
     @http_route('/block', methods=['POST'])
-    def _api_add_block(self):
+    def _api_add_block(self) -> ExecuteResult:
         block_data: dict = request.get_json()
         block = Block.deserialize(block_data)
         res: ExecuteResult = self.blockchain.add_block(block)

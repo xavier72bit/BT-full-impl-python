@@ -3,6 +3,7 @@ from time import time
 
 # local import
 from blockchain.core.block import Block
+from blockchain.core.execute_result import ExecuteResult
 from blockchain.core.transaction import Transaction
 from blockchain.tools.http_client_json import JSONClient
 
@@ -27,7 +28,7 @@ class ProofOfWorkMining:
             self.get_difficulty()
         return block.hash.startswith(self.pow_check_str)
 
-    def mine_block(self, mining_data = None) -> Block | None:
+    def mine_block(self) -> Block | None:
         """
         :return:
         """
@@ -56,14 +57,8 @@ class ProofOfWorkMining:
 
             nonce += 1
 
-    def start_mining(self) -> bool:
+    def start_mining(self) -> ExecuteResult:
         block = self.mine_block()
-
         if block is None:
-            print("交易池无数据")
-            return False
-
-        return json_client.post(
-            f"{self.node_addr}/block",
-            data=block.serialize()
-        )
+            return ExecuteResult(success=False, error_type=None, message="交易池无数据")
+        return json_client.post(f"{self.node_addr}/block", data=block.serialize())

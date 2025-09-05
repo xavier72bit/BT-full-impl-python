@@ -5,6 +5,7 @@ import argparse
 # local import
 from blockchain.roles.node.node import Node
 from blockchain.roles.wallet.wallet import Wallet
+from blockchain.roles.mining.pow import ProofOfWorkMining
 
 # 角色支持的类型定义 Const
 SUPPORTED_ROLE_TYPES = {
@@ -136,9 +137,13 @@ def generate_wallet():
     print(f"Public Key(wallet address): <{new_wallet.pubkey}>")
     print(f"Secret Key(wallet password, Never disclose!!): <{new_wallet.seckey}>")
 
-def run_miner(_type):
-    print(f"Running miner (type={_type})")
-    # TODO: 实现矿工逻辑
+def run_miner(public_key, connect_node_addr, host, port, using_testing_nexus: bool, testing_nexus_addr):
+    #TODO: Miner GUI界面
+    miner = ProofOfWorkMining(miner_addr=public_key, node_addr=connect_node_addr)
+
+    if using_testing_nexus:
+        from blockchain.testing.miner_debug_api import MinerDebugAPI
+        MinerDebugAPI(miner, host, port).start(testing_nexus_addr)
 
 def run_node_http(
         # node info
@@ -195,7 +200,11 @@ def main():
         )
 
     elif args.role == "miner":
-        run_miner(args.type)
+        run_miner(
+            args.public_key, args.connect_node_addr,
+            args.host, args.port,
+            args.using_testing_nexus, args.testing_nexus_addr
+        )
 
     elif args.role == "node":
         if args.type == "http":
