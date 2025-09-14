@@ -49,7 +49,7 @@ class PeerClientAdapter(ABC):
         pass
 
     @abstractmethod
-    def get_blockchain_data(self, peer: NetworkNodePeer):
+    def get_blockchain_data(self, peer: NetworkNodePeer) -> dict:
         """
         获取邻居的区块链数据
         """

@@ -3,7 +3,6 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from ..types.role_types import Node, TaskQueue
-    from ..types.core_types import Block
     from ..types.network_types import PeerClient
 
 # std import
@@ -14,7 +13,7 @@ from loguru import logger
 
 # local import
 from ..tools.threading_lock import Lock
-from .block import BlockSummary
+from .block import BlockSummary, Block
 from .execute_result import ExecuteResult, ExecuteResultErrorTypes
 
 
@@ -35,6 +34,12 @@ class BlockChain:
 
     def __iter__(self):
         return self.__chain.__iter__()
+
+    def __getitem__(self, item):
+        return self.__chain[item]
+
+    def __delitem__(self, key):
+        del self.__chain[key]
 
     @property
     def pow_difficulty(self) -> int:
@@ -77,7 +82,7 @@ class BlockChain:
                     balance += tx.amount
                 else:
                     continue
-        logger.info(f"计算<addr: {wallet_addr}> 的余额: balance")
+        logger.info(f"计算<addr: {wallet_addr}> 的余额: {balance}")
         return balance
 
     def valid_proof_of_work(self, block: Block) -> bool:
@@ -193,7 +198,6 @@ class BlockChain:
 
     def serialize_summary(self) -> dict:
         return self.summary.serialize()
-
 
 class BlockChainSummary:
     __slots__ = ['blocks', 'total_length', 'total_difficulty']

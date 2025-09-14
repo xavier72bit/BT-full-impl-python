@@ -51,7 +51,7 @@ class HTTPPeerClientAdapter(PeerClientAdapter):
 
         return json_client.get(url=f"{peer.addr}{api_path}")
 
-    def get_blockchain_data(self, peer: NetworkNodePeer):
+    def get_blockchain_data(self, peer: NetworkNodePeer) -> dict:
         self.check_peer_protocol(peer)
         api_path = '/blockchain'
 
