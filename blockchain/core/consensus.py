@@ -31,11 +31,11 @@ class POWConsensus:
         #TODO
         logger.info("执行共识算法")
 
-    def check_summary(self, bc_summary: BlockChainSummary, src_peer: NetworkNodePeer) -> bool:
+    def check_summary(self, bc_summary: BlockChainSummary) -> bool:
         current_summary = self.node.blockchain.summary
 
         if (bc_summary.total_difficulty > current_summary.total_difficulty
-                and bc_summary.total_length > bc_summary.total_length):
+                and bc_summary.total_length > current_summary.total_length):
             logger.info("检测到BlockChain Summary的难度与长度均大于本机BlockChain数据, 创建执行共识算法的Task")
             return True
         else:
